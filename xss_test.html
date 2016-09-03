@@ -1,0 +1,103 @@
+
+<html>
+
+    <script>
+        function report(xss_detail_information) {
+            
+        }
+        
+        function check_eval_event(element) {
+            return false;
+        }
+        
+        function init() {
+            var observer = new MutationObserver(function (mutations) { 
+                mutations.forEach(function (mutation) {
+                    if ('childList'==mutation.type || 'subtree'==mutation.type) {
+                        for (var index=0;index<mutation.addedNodes.length;++index) {
+                            console.log(mutation.addedNodes[index].tagName);
+                        }
+                    } else if ('attributes'==mutation.type) {
+                        var new_attribute_value=eval('mutation.target.'+mutation.attributeName);
+                        console.log('attribute:'+mutation.attributeName+' old_value:'+mutation.oldValue+' new_value:'+new_attribute_value);
+                    } else {
+                        console.log(mutation);
+                    }
+                }); 
+            });
+
+            observer.observe(document.body, {
+                'childList': true,
+                'subtree': true,
+                'attributes' : true
+            });
+            
+            var img=document.createElement('img');
+            img.src='http://www.baidu.com/';
+            img.onerror='alert("xss");';
+            img.alt='trd';
+            document.body.appendChild(img);
+            
+            
+        }
+    </script>
+   
+    <body onload="init()">
+       
+       <div id="xss_test_1"><!-- 反射XSS ,直接插入 <script> -->
+           
+       </div>
+       <div id="xss_test_2"><!-- 反射XSS ,直接插入 <img> -->
+           
+       </div>
+       <div id="xss_test_3"><!-- 反射XSS ,直接插入 <iframe> -->
+           
+       </div>
+       <div id="xss_test_4"><!-- 反射XSS ,混合插入 <script> -->
+           
+       </div>
+       <div id="xss_test_5"><!-- 反射XSS ,混合属性和事件属性插入 <img> -->
+           
+       </div>
+       <div id="xss_test_6"><!-- 反射XSS ,<img> 中混合属性和事件属性插入 <script> -->
+           
+       </div>
+       <div id="xss_test_7"><!-- 反射XSS ,混合元素插入 -->
+           
+       </div>
+       
+       <div id="xss_test_8"><!-- 储存XSS ,直接插入 <script> -->
+           
+       </div>
+        
+    </body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
