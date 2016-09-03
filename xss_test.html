@@ -2,21 +2,22 @@
 <html>
 
     <script>
-        function report(xss_detail_information) {
-            console.log('WARNING! EVAL ELEMENT ..');
+        function report(xss_detail_element) {
+            console.log('WARNING! EVAL ELEMENT .. '+xss_detail_element.tagName);
         }
         
         function check_eval_event(element) {
             var black_element_event=['onerror','onload'];
             
-            for (var index in black_element_event)
-                if (black_element_event[index]==element.tagName)
-                    return true;
+            for (var element_attribute_index in element)
+                for (var black_element_event_index in black_element_event)
+                    if (black_element_event[black_element_event_index]==element_attribute_index)
+                        return true;
             return false;
         }
         
         function check_eval_element(element) {
-            var black_element_name=['SCRIPT','IMG','IFRAME'];
+            var black_element_name=['SCRIPT','IFRAME'];
             
             for (var index in black_element_name)
                 if (black_element_name[index]==element.tagName)
@@ -38,7 +39,8 @@
                     } else if ('attributes'==mutation.type) {
                         var new_attribute_value=eval('mutation.target.'+mutation.attributeName);
                         console.log('attribute:'+mutation.attributeName+' old_value:'+mutation.oldValue+' new_value:'+new_attribute_value);
-                        if (check_eval_event(new_attribute_value)) {
+                        if (check_eval_event(mutation.target)) {
+                            report(mutation.target);
                         }
                     } else {
                         console.log(mutation);
@@ -52,12 +54,19 @@
                 'attributes' : true
             });
             
+            /*
             var img=document.createElement('img');
             img.src='http://www.baidu.com/';
             img.onerror='alert("xss");';
-            img.alt='trd';
             document.body.appendChild(img);
-            
+            */
+            document.body.innerHTML='<img src="http://www.baidu.com/" onerror="alert(\'xss\');" />';
+            /*
+            img.onerror='alert("xasd");';
+            img.alt='trd';
+            */
+            var script=document.createElement('script');
+            document.body.appendChild(script);
             
         }
     </script>
