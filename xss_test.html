@@ -3,30 +3,50 @@
 
     <script>
         function report(xss_detail_information) {
-            
+            console.log('WARNING! EVAL ELEMENT ..');
         }
         
         function check_eval_event(element) {
+            var black_element_event=['onerror','onload'];
+            
+            for (var index in black_element_event)
+                if (black_element_event[index]==element.tagName)
+                    return true;
+            return false;
+        }
+        
+        function check_eval_element(element) {
+            var black_element_name=['SCRIPT','IMG','IFRAME'];
+            
+            for (var index in black_element_name)
+                if (black_element_name[index]==element.tagName)
+                    return true;
             return false;
         }
         
         function init() {
-            var observer = new MutationObserver(function (mutations) { 
+            var observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
                     if ('childList'==mutation.type || 'subtree'==mutation.type) {
                         for (var index=0;index<mutation.addedNodes.length;++index) {
-                            console.log(mutation.addedNodes[index].tagName);
+                            var new_element=mutation.addedNodes[index];
+//                            console.log(new_element.tagName);
+                            if (check_eval_event(new_element) || check_eval_element(new_element)) {
+                                report(new_element);
+                            }
                         }
                     } else if ('attributes'==mutation.type) {
                         var new_attribute_value=eval('mutation.target.'+mutation.attributeName);
                         console.log('attribute:'+mutation.attributeName+' old_value:'+mutation.oldValue+' new_value:'+new_attribute_value);
+                        if (check_eval_event(new_attribute_value)) {
+                        }
                     } else {
                         console.log(mutation);
                     }
                 }); 
             });
 
-            observer.observe(document.body, {
+            observer.observe(document.body,{
                 'childList': true,
                 'subtree': true,
                 'attributes' : true
