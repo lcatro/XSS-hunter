@@ -39,18 +39,20 @@
                     if ('childList'==mutation.type || 'subtree'==mutation.type) {
                         for (var index=0;index<mutation.addedNodes.length;++index) {
                             var new_element=mutation.addedNodes[index];
+                            
 //                            console.log(new_element.tagName);
                             if (check_eval_event(new_element) || check_eval_element(new_element)) {
-                                console.log('child list');
+//                                console.log('child list');
                                 report(new_element);
                             }
                         }
                     } else if ('attributes'==mutation.type) {
                         var new_attribute_value=eval('mutation.target.'+mutation.attributeName);
                         var change_attribute_element=mutation.target;
+                        
 //                        console.log('attribute:'+mutation.attributeName+' old_value:'+mutation.oldValue+' new_value:'+new_attribute_value);
                         if (check_eval_event(change_attribute_element)) {
-                            console.log('attribute');
+//                            console.log('attribute');
                             report(change_attribute_element);
                         }
                     } else {
@@ -72,11 +74,13 @@
             document.body.appendChild(img);
             */
             
-            var test_script='<img src="http://www.baidu.com/" onerror="alert(\'xss\');" />';
+            var test_script='<img src="http://www.baidu.com/" onerror="alert(\'img on error xss\');" />';
             test_script+='<img src="https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/logo_white.png" />';
             test_script+='<img>';
-            test_script+='<img src="https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo_top_ca79a146.png" onload="alert(\'xss\');" />';
-            test_script+='<script>alert("xss");';
+            test_script+='<img src="https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo_top_ca79a146.png" onload="alert(\'img onload  xss\');" />';
+            test_script+='<script>alert("script xss");';
+            test_script+='</script';
+            test_script+='>';
             test_script+='<nb>';
             test_script+='</nb>';
             
