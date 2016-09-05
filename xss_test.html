@@ -7,56 +7,46 @@
             console.log('WARNING! EVAL ELEMENT .. '+xss_detail_element.tagName+'  '+xss_detail_element.src);
         }
         
-        function check_eval_event(element) {
+        function dynamic_check_eval_event(element) {
             var black_element_event=['onerror','onload'];
             
             for (var element_attribute_index in element) {
                 var event=eval('element.'+element_attribute_index);
                 
-                for (var black_element_event_index in black_element_event) {
-                    if (black_element_event[black_element_event_index]==element_attribute_index &&
-                        'function'==typeof event) {
-//                        console.log(black_element_event[black_element_event_index]+'   '+typeof event_onerror);
+                for (var black_element_event_index in black_element_event)
+                    if (black_element_event[black_element_event_index]==element_attribute_index && 'function'==typeof event) 
                         return true;
-                    }
-                }
             }
             return false;
         }
         
-        function check_eval_element(element) {
+        function dynamic_check_eval_element(element) {
             var black_element_name=['SCRIPT','IFRAME'];
             
             for (var index in black_element_name)
                 if (black_element_name[index]==element.tagName)
                     return true;
+            
             return false;
         }
         
         function init() {
+            //  init body observer object for monited dynamic element create ..
             var observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
                     if ('childList'==mutation.type || 'subtree'==mutation.type) {
                         for (var index=0;index<mutation.addedNodes.length;++index) {
                             var new_element=mutation.addedNodes[index];
                             
-//                            console.log(new_element.tagName);
-                            if (check_eval_event(new_element) || check_eval_element(new_element)) {
-//                                console.log('child list');
+                            if (dynamic_check_eval_event(new_element) || dynamic_check_eval_element(new_element))
                                 report(new_element);
-                            }
                         }
                     } else if ('attributes'==mutation.type) {
                         var new_attribute_value=eval('mutation.target.'+mutation.attributeName);
                         var change_attribute_element=mutation.target;
                         
-//                        console.log('attribute:'+mutation.attributeName+' old_value:'+mutation.oldValue+' new_value:'+new_attribute_value);
-                        if (check_eval_event(change_attribute_element)) {
-//                            console.log('attribute');
+                        if (dynamic_check_eval_event(change_attribute_element))
                             report(change_attribute_element);
-                        }
-                    } else {
-                        console.log(mutation);
                     }
                 }); 
             });
@@ -67,6 +57,13 @@
                 'attributes' : true
             });
             
+            //  
+            
+            //  build element on body ..
+            test_case();
+        }
+        
+        function test_case() {
             /*
             var img=document.createElement('img');
             img.src='http://www.baidu.com/';
@@ -95,8 +92,8 @@
             var script=document.createElement('script');
             document.body.appendChild(script);
             */
-            
         }
+        
     </script>
    
     <body onload="init()">
