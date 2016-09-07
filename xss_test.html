@@ -3,6 +3,10 @@
 
     <script>
         
+        REFLECTED_XSS_INJECT_DOM=1;
+        REFLECTED_XSS_INJECT_ELEMENT_OR_JAVASCRIPT=2;
+        
+        
         function report(xss_detail_element) {
             console.log('WARNING! EVAL ELEMENT .. '+xss_detail_element.tagName+'  '+xss_detail_element.src);
         }
@@ -142,15 +146,55 @@
             return result;
         }
         
-        function dom_child_element_recursion(element,flag) {
+        function analayis_reflected_parameter_xss(danger_parameter_list) {
+            var result=[];
             
+            for (var danger_parameter_list_index in danger_parameter_list) {
+                var analayis_index={};
+                var danger_parameter_index=danger_parameter_list[danger_parameter_list_index];
+                var eval_flag_index=find_first_eval_flag(danger_parameter_index);
+                
+                if (-1!=eval_flag_index) {
+                    var eval_flag=danger_parameter_index[eval_flag_index];
+                    
+                    if ('<'==eval_flag || '>'==eval_flag) {
+                        analayis_index['reflected_type']=REFLECTED_XSS_INJECT_DOM;
+                    } else if ('\''==eval_flag || '"'==eval_flag) {
+                        analayis_index['reflected_type']=REFLECTED_XSS_INJECT_ELEMENT_OR_JAVASCRIPT;
+                    }
+                    analayis_index['reflected_data']=danger_parameter_list;
+                }
+                result.push(analayis_index);
+            }
+            
+            return result;
         }
         
+        function dom_child_element_recursion(element,parameter_analayis_information) {
+            ele
+        }
+        
+        function find_first_eval_flag(parameter_value_string) {
+            var flag_index=parameter_value_string.indexOf('<');
+            if (-1!=flag_index)
+                return flag_index;
+            
+            flag_index=parameter_value_string.indexOf('>');
+            if (-1!=flag_index)
+                return flag_index;
+            
+            flag_index=parameter_value_string.indexOf('\'');
+            if (-1!=flag_index)
+                return flag_index;
+            
+            flag_index=parameter_value_string.indexOf('"');
+            if (-1!=flag_index)
+                return flag_index;
+            return -1;
+        }
+            
         function check_insert_xss_code(parameter_value_string) {
-            if (-1!=parameter_value_string.indexOf('<') || 
-                -1!=parameter_value_string.indexOf('>') || 
-                -1!=parameter_value_string.indexOf('\'') || 
-                -1!=parameter_value_string.indexOf('"'))
+            if (-1!=find_first_eval_flag(parameter_value_string))
                 return true;
             return false;
         }
@@ -205,14 +249,14 @@
                 for (var parameter_index_ in url_parameter_list) {
                     var parameter_index=url_parameter_list[parameter_index_];
                     
-                    decode_parameter_list.push(unescape(parameter_index['value']).toLowerCase());
+                    decode_parameter_list.push(unescape(parameter_index['value']).toLowerCase().trim());
                 }
                 for (var index in decode_parameter_list)
                     if (check_insert_xss_code(decode_parameter_list[index]))
                         danger_parameter_value_list.push(decode_parameter_list[index]);
                 
                 console.log(danger_parameter_value_list);
-//                document.body.childNodes;
+                dom_child_element_recursion(document.body.childNodes,analayis_reflected_parameter_xss(danger_parameter_value_list));
             }
             return false;
         }
