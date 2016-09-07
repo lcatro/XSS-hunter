@@ -94,9 +94,113 @@
             */
         }
         
+        
+        /*
+        
+        
+            检测反射型XSS 逻辑..
+        
+        
+        */
+        
+        function split_url_parameter_value(parameter_key_value) {
+            var offset_equal_flag=parameter_key_value.indexOf('=');
+            var result={};
+            
+            if (-1!=offset_equal_flag) {
+                result['key']=parameter_key_value.substr(0,offset_equal_flag);
+                result['value']=parameter_key_value.substr(offset_equal_flag+1);
+            }
+            return result;
+        }
+        
+        function split_url_parameter_list() {
+            var current_url=window.location.href;
+            var is_exist_url_parameter=current_url.indexOf('?');
+            var result=[];
+            
+            if (-1!=is_exist_url_parameter) {
+                current_url=current_url.substr(is_exist_url_parameter+1);
+                var every_parameter=current_url.indexOf('&');
+                
+                while (-1!=every_parameter) {
+                    var parameter_key_value=current_url.substr(0,every_parameter);
+                    var result_key_value_block=split_url_parameter_value(parameter_key_value);
+                    
+                    if (undefined==result_key_value_block.key)
+                        return result;
+                    
+                    result.push(result_key_value_block);
+                    current_url=current_url.substr(every_parameter+1);
+                    every_parameter=current_url.indexOf('&');
+                }
+                var result_key_value_block=split_url_parameter_value(current_url);
+
+                if (undefined!=result_key_value_block.key) 
+                    result.push(result_key_value_block);
+            }
+            return result;
+        }
+        split_url_parameter_list();
+        
+        function check_reflected_xss() {
+            var url_parameter_list=split_url_parameter_list();
+            
+            /*
+            
+                反射XSS Payload 集合
+                
+                注入代码到HTML DOM :
+                http://xxx.com/?messages=<script>alert('xss');<//script>
+                http://xxx.com/?messages=<img src='' onerror="alert('xss');" />
+                http://xxx.com/?messages=<iframe src="http://xx.com/" />
+                http://xxx.com/?messages=<a href="javascript:alert('xss');" />
+                http://xxx.com/?messages=<a href="data:text/html,<script>alert('xss');<//script>" />
+                注入代码到HTML Element Attribute 绕过:
+                http://xxx.com/?messages=" /><script>alert('xss')<//script>
+                http://xxx.com/?messages=" onerror="alert('xss');" />
+                注入代码到javascript :
+                http://xxx.com/?messages=';alert('xss');
+            
+                由上面的Payload 总结可以知道,反射型XSS 内带有< > " ' 关键字:
+                还有对应的URL Encode 混淆:%3C <  %3E >  %22 "  %27 '
+            
+                URL 解析过程:
+                http://xxx.com/a.php?arg=%3CScript%3ealert(%27xss%27);%3C/scRiPt%3e
+                                            |
+                                split_url_parameter_list()  
+                                            |
+                                            v
+                        arg=%3CScript%3ealert(%27xss%27);%3C/scRiPt%3e
+                                            |
+                                        unescape()
+                                            |
+                                            v
+                             arg=<Script>alert('xss');<//scRiPt>
+                                            |
+                                    URL.toLowerCase()
+                                            |
+                                            v
+                             arg=<script>alert('xss');<//script>
+                
+                最后利用DOM 树遍历找特征..
+                
+            */
+            
+//            if () {  //  
+//                
+//            }
+            
+            
+            return false;
+        }
+        
+        
+        
+        
     </script>
    
-    <body onload="init()">
+    <body onload="">
        
        <div id="xss_test_1"><!-- 反射XSS ,直接插入 <script> -->
            
