@@ -141,7 +141,19 @@
             }
             return result;
         }
-        split_url_parameter_list();
+        
+        function dom_child_element_recursion(element,flag) {
+            
+        }
+        
+        function check_insert_xss_code(parameter_value_string) {
+            if (-1!=parameter_value_string.indexOf('<') || 
+                -1!=parameter_value_string.indexOf('>') || 
+                -1!=parameter_value_string.indexOf('\'') || 
+                -1!=parameter_value_string.indexOf('"'))
+                return true;
+            return false;
+        }
         
         function check_reflected_xss() {
             var url_parameter_list=split_url_parameter_list();
@@ -187,15 +199,25 @@
                 
             */
             
-//            if () {  //  
-//                
-//            }
-            
-            
+            if (url_parameter_list.length) {
+                var decode_parameter_list=[];
+                var danger_parameter_value_list=[];
+                for (var parameter_index_ in url_parameter_list) {
+                    var parameter_index=url_parameter_list[parameter_index_];
+                    
+                    decode_parameter_list.push(unescape(parameter_index['value']).toLowerCase());
+                }
+                for (var index in decode_parameter_list)
+                    if (check_insert_xss_code(decode_parameter_list[index]))
+                        danger_parameter_value_list.push(decode_parameter_list[index]);
+                
+                console.log(danger_parameter_value_list);
+//                document.body.childNodes;
+            }
             return false;
         }
         
-        
+        check_reflected_xss();
         
         
     </script>
