@@ -172,7 +172,8 @@
                         analayis_index['reflected_data']=danger_parameter_index;
                     } else if ('\''==eval_flag || '"'==eval_flag) {
                         analayis_index['reflected_type']=REFLECTED_XSS_INJECT_ELEMENT_OR_JAVASCRIPT;
-                        analayis_index['reflected_data']=split_string_space(danger_parameter_index);
+//                        analayis_index['reflected_data']=split_string_space(danger_parameter_index);  使用分割属性的方法来匹配属性插入的元素
+                        analayis_index['reflected_data']=danger_parameter_index;
                     }
                 }
                 result.push(analayis_index);
@@ -212,13 +213,46 @@
         
         function check_insert_xss_into_element(reflected_parameter) {
             if (REFLECTED_XSS_INJECT_DOM==reflected_parameter['reflected_type']) {
+                var insert_dom_string=reflected_parameter['reflected_data'];
+                /*
                 var reg_express=new RegExp('<(\S*?) *>');
                 var element_list=reg_express.exec(reflected_parameter['reflected_data']);
                 console.log(reflected_parameter['reflected_data']);
                 console.log(element_list);
                 document.querySelector(reflected_parameter['reflected_data']);  //  TIPS : 解析出元素之后再去获取selector
+                */
                 
+                //  WARNING! 插入<script> 标签会遇到XSS 过滤器..
+                
+                var body_code=document.body.innerHTML;
+                var index=body_code.indexOf(insert_element_string);
+
+                console.log(insert_dom_string);
+                console.log(body_code);
+                if (-1!=index) {
+                    console.log(index);
+                }
             } else if (REFLECTED_XSS_INJECT_ELEMENT_OR_JAVASCRIPT==reflected_parameter['reflected_type']) {
+                var insert_element_string=reflected_parameter['reflected_data'];
+                
+                if ('"'==insert_element_string ||
+                    '\''==insert_element_string) {
+                    var attribute_selector=document.querySelectorAll('[\\'+attribute_list[0]+']');
+                    
+                    if (attribute_selector.length) {
+                        console.log(attribute_selector);
+                    }
+                } else {
+                    var body_code=document.body.innerHTML;
+                    var index=body_code.indexOf(insert_element_string);
+                    
+                    console.log(insert_element_string);
+                    if (-1!=index) {
+                        console.log(index);
+                    }
+                }
+                
+                /*
                 var attribute_list=reflected_parameter['reflected_data'];
                 
                 if (attribute_list.length) {
@@ -235,7 +269,6 @@
                             转码情况下:<img src="123&quet" />
                             XSS 成功情况下:<img src="123" " />
                         
-                        */
                         
                         if (attribute_selector.length) {
                             console.log(attribute_selector);
@@ -256,14 +289,16 @@
                             attribute_query_selector_string+=']';
                         }
                         
-                        //   WARNING ! 还没有好的办法找到event ..
-                        
-                        
-                        var attribute_selector=document.querySelectorAll(attribute_query_selector_string);
-                        console.log(attribute_query_selector_string);
-                        console.log(attribute_selector);
+                        if (''!=attribute_query_selector_string) {
+                            //   WARNING ! 还没有好的办法找到event ..
+
+                            var attribute_selector=document.querySelectorAll(attribute_query_selector_string);
+                            console.log(attribute_query_selector_string);
+                            console.log(attribute_selector);
+                        }
                     }
                 }
+                */
             }
             
             return false;
