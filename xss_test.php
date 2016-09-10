@@ -207,49 +207,64 @@
             return false;
         }
         
-        function resolve_element_tagname() {
-            
-        }
-        
         function check_insert_xss_into_element(reflected_parameter) {
             if (REFLECTED_XSS_INJECT_DOM==reflected_parameter['reflected_type']) {
                 var insert_dom_string=reflected_parameter['reflected_data'];
-                /*
-                var reg_express=new RegExp('<(\S*?) *>');
-                var element_list=reg_express.exec(reflected_parameter['reflected_data']);
-                console.log(reflected_parameter['reflected_data']);
-                console.log(element_list);
-                document.querySelector(reflected_parameter['reflected_data']);  //  TIPS : 解析出元素之后再去获取selector
-                */
-                
-                //  WARNING! 插入<script> 标签会遇到XSS 过滤器..
-                
+                var insert_element_name=insert_dom_string.substr(insert_dom_string.indexOf('<')+1,insert_dom_string.indexOf('>')-1).trim();
+
                 var body_code=document.body.innerHTML;
                 var index=body_code.indexOf(insert_element_string);
 
                 console.log(insert_dom_string);
-                console.log(body_code);
-                if (-1!=index) {
-                    console.log(index);
+                if (-1!=index) {  //  针对URL 参数里的可疑HTML 代码在body 内部的HTML 代码中搜索..
+                    console.log('WARNING ! found DOM XSS ..');
+                    return true;
+                }
+                if ('script'==insert_element_name) {  //  最后是针对已经被XSS 过滤器净化之后的<script> 标签..
+                    var script_selector=document.body.querySelectorAll('script');
+                    
+                    for (var script_selector_index=0;script_selector_index<script_selector.length;++script_selector_index) {
+                        if (''==script_selector[script_selector_index].innerHTML.trim()) {
+                            //  <script> 内部空代码意味着XSS 过滤器已经成功过滤掉<script> 中的代码..
+                            console.log('WARNING ! found Script inject (XSS-Audit had filter )');
+                        }
+                    }
                 }
             } else if (REFLECTED_XSS_INJECT_ELEMENT_OR_JAVASCRIPT==reflected_parameter['reflected_type']) {
                 var insert_element_string=reflected_parameter['reflected_data'];
                 
                 if ('"'==insert_element_string ||
                     '\''==insert_element_string) {
-                    var attribute_selector=document.querySelectorAll('[\\'+attribute_list[0]+']');
+                    var attribute_selector=document.body.querySelectorAll('[\\'+attribute_list[0]+']');
                     
                     if (attribute_selector.length) {
-                        console.log(attribute_selector);
+                        console.log('WARNING ! found Attribute XSS -- Bypass Attribute String closed (" and \')..');
+//                        console.log(attribute_selector);
                     }
                 } else {
                     var body_code=document.body.innerHTML;
-                    var index=body_code.indexOf(insert_element_string);
+                    var unencode_index=body_code.indexOf(insert_element_string);
+                    var encode_index=body_code.indexOf(insert_element_string.replace(/</g,'%3C').replace(/>/g,'%3E'));
+                    /*
+                        WARNING! 这种情况还需要注意绕过属性闭合构造DOM XSS 的情况,有可能在插入的时候< > 会被过滤成字符编码..
+                        Example:
+
+                        " onerror="alert(\'element onerror() xss\');" /><script>alert(\'DOM XSS\');<//script>
+                    */
                     
-                    console.log(insert_element_string);
-                    if (-1!=index) {
-                        console.log(index);
+                    if (-1!=unencode_index) {
+                        console.log('WARNING ! found Attribute XSS ,unencode insert code ..');
+//                        console.log(index);
+                    } else if (-1!=encode_index) {
+                        console.log('WARNING ! found Attribute XSS ,encode insert code ..');
                     }
+                    
+                    //  WARNING ! 针对Attribute 的闭合XSS 构造也会触发XSS 过滤器,onerror 等事件将不再有代码存在..
+                    var =split_string_space(insert_element_string);
+                    if () {
+                        
+                    }
+                    
                 }
                 
                 /*
@@ -363,7 +378,6 @@
                 if (danger_parameter_value_list.length) {
                     var reflected_parameter_list=analayis_reflected_parameter_xss(danger_parameter_value_list);
                     
-                    console.log(reflected_parameter_list);
                     for (var reflected_parameter_list_index in reflected_parameter_list) {
                         if (check_insert_xss_into_element(reflected_parameter_list[reflected_parameter_list_index])) {
                             console.log('WARNING reflected XSS ');
@@ -391,8 +405,7 @@
                             
             <!-- test case -->
                             
-            <img src="123" "/>
-            <img src="321" "/>
+            <img src="123" onerror="alert('xss')"/>
             
             <script>alert('xss');</script>
                             
