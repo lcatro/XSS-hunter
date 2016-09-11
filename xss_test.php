@@ -182,6 +182,14 @@
         }
         
         function find_first_eval_flag(parameter_value_string) {
+            flag_index=parameter_value_string.indexOf('\'');
+            if (-1!=flag_index)
+                return flag_index;
+            
+            flag_index=parameter_value_string.indexOf('"');
+            if (-1!=flag_index)
+                return flag_index;
+            
             var flag_index=parameter_value_string.indexOf('<');
             if (-1!=flag_index)
                 return flag_index;
@@ -190,13 +198,6 @@
             if (-1!=flag_index)
                 return flag_index;
             
-            flag_index=parameter_value_string.indexOf('\'');
-            if (-1!=flag_index)
-                return flag_index;
-            
-            flag_index=parameter_value_string.indexOf('"');
-            if (-1!=flag_index)
-                return flag_index;
             return -1;
         }
             
@@ -395,7 +396,7 @@
                 http://127.0.0.1/xss_test.php?xss_test_2=" onerror="alert('xss');  --  元素事件XSS 测试
                 http://127.0.0.1/xss_test.php?xss_test_2=' " onload="alert('xss');  --  元素事件XSS 误报BUG 测试
                 http://127.0.0.1/xss_test.php?xss_test_2=" alt="change tips";  --  元素XSS 修改非事件属性测试
-                http://127.0.0.1/xss_test.php?xss_test_2=" /><script>alert('xss');</script>  --  绕过元素之外构造DOM XSS 测试 (WARNING !!! 未通过)
+                http://127.0.0.1/xss_test.php?xss_test_2=" /><script>alert('xss');</script>  --  绕过元素之外构造DOM XSS 测试
                 http://127.0.0.1/xss_test.php?xss_test_2=123  --  元素XSS 误报测试
                 
             -->
