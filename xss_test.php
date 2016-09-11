@@ -245,7 +245,7 @@
                         转码情况下:<img src="123&quet" />
                         XSS 成功情况下:<img src="123" " />
                     */
-                    var attribute_selector=document.body.querySelectorAll('[\\'+attribute_list[0]+']');
+                    var attribute_selector=document.body.querySelectorAll('[\\'+insert_element_string+']');
                     
                     if (attribute_selector.length) {
                         console.log('WARNING ! found Attribute XSS -- Bypass Attribute String closed (" and \')..');
@@ -371,39 +371,41 @@
    
     <body onload="check_reflected_xss()">
         
-        <div id="xss_test_1"><!-- 反射XSS ,直接插入 <script> -->
+        <div id="xss_test_1">
+            <!-- 反射XSS ,直接插入 <script>,<img>,<iframe>,混合插入 <script>,<img>,<iframe> 
+                测试Payload:
+                
+                http://127.0.0.1/xss_test.php?xss_test_1=<script>alert('xss');</script>  --  基本测试
+                http://127.0.0.1/xss_test.php?xss_test_1=<img src="" onerror="alert('xss')" />  --  DOM <img> 元素事件XSS 执行测试 (WARNING !!! 未通过)
+                http://127.0.0.1/xss_test.php?xss_test_1=<iframe src="http://www.baidu.com" />  --  <iframe> 元素挂马测试 (WARNING !!! 未通过)
+                http://127.0.0.1/xss_test.php?xss_test_1=<svg>/<script>alert('xss');</script>  --  组合HTML 元素绕过测试 (WARNING !!! 未通过)
+                http://127.0.0.1/xss_test.php?xss_test_1=<div><a><img src="" onerror="alert('xss')" /> (WARNING !!! 未通过)
+                
+            -->
             <?php
                 if (isset($_GET['xss_test_1']))
                     echo $_GET['xss_test_1'];
             ?>
-                            
-                            
-            <!-- test case -->
         </div>
-        <div id="xss_test_2"><!-- 反射XSS ,直接插入 <img> -->
+        <div id="xss_test_2">
+            <!-- 反射XSS 混合元素插入,混合属性和事件属性插入 <img> ,<img> 中混合属性和事件属性插入 <script>
+                测试Payload:
+                
+                http://127.0.0.1/xss_test.php?xss_test_2="  --  初期XSS 绕过元素属性闭合测试
+                http://127.0.0.1/xss_test.php?xss_test_2=" onerror="alert('xss');  --  元素事件XSS 测试
+                http://127.0.0.1/xss_test.php?xss_test_2=' " onload="alert('xss');  --  元素事件XSS 误报BUG 测试
+                http://127.0.0.1/xss_test.php?xss_test_2=" alt="change tips";  --  元素XSS 修改非事件属性测试
+                http://127.0.0.1/xss_test.php?xss_test_2=" /><script>alert('xss');</script>  --  绕过元素之外构造DOM XSS 测试 (WARNING !!! 未通过)
+                http://127.0.0.1/xss_test.php?xss_test_2=123  --  元素XSS 误报测试
+                
+            -->
             <?php
                 if (isset($_GET['xss_test_2']))
-                    echo '<img src="'.$_GET['xss_test_2'].'"/>';
+                    echo '<img src="'.$_GET['xss_test_2'].'" />';
             ?>
-            
-        </div>
-        <div id="xss_test_3"><!-- 反射XSS ,直接插入 <iframe> -->
-           
-        </div>
-        <div id="xss_test_4"><!-- 反射XSS ,混合插入 <script> -->
-           
-        </div>
-        <div id="xss_test_5"><!-- 反射XSS ,混合属性和事件属性插入 <img> -->
-           
-        </div>
-        <div id="xss_test_6"><!-- 反射XSS ,<img> 中混合属性和事件属性插入 <script> -->
-           
-        </div>
-        <div id="xss_test_7"><!-- 反射XSS ,混合元素插入 -->
-           
         </div>
        
-        <div id="xss_test_8"><!-- 储存XSS ,直接插入 <script> -->
+        <div id="xss_test_3"><!-- 储存XSS ,直接插入 <script> -->
            
         </div>
         
