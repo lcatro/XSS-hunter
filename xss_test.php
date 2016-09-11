@@ -225,6 +225,7 @@
                         if (''==script_selector[script_selector_index].innerHTML.trim()) {
                             //  <script> 内部空代码意味着XSS 过滤器已经成功过滤掉<script> 中的代码..
                             console.log('WARNING ! found Script inject (XSS-Audit had filter )');
+                            return true;
                         }
                     }
                 }
@@ -248,6 +249,7 @@
                     
                     if (attribute_selector.length) {
                         console.log('WARNING ! found Attribute XSS -- Bypass Attribute String closed (" and \')..');
+                        return true;
                     }
                 } else {
                     var body_code=document.body.innerHTML;
@@ -262,32 +264,33 @@
                     
                     if (-1!=unencode_index) {
                         console.log('WARNING ! found Attribute XSS ,unencode insert code ..');
+                        return true;
                     } else if (-1!=encode_index) {
                         console.log('WARNING ! found Attribute XSS ,encode insert code ..');
+                        return true;
                     }
-                    
                     var attribute_list=split_string_space(insert_element_string);  //  使用分割属性的方法来匹配属性插入的元素
                     var valid_query_attribute_name_string='';
-                    
+
                     for (var attribute_list_index_=0;attribute_list_index_<attribute_list.length;++attribute_list_index_) {
                         var attribute_list_index=split_url_parameter_value(attribute_list[attribute_list_index_]);
-                        
+
                         if (undefined!=attribute_list_index['key'] && 
                            ('"'!=attribute_list_index['key'] || '\''!=attribute_list_index['key']))
                             valid_query_attribute_name_string+='['+attribute_list_index['key']+']';
                     }
                     var query_result=document.querySelectorAll(valid_query_attribute_name_string);
-                    
+
                     if (query_result.length) {
                         for (var query_result_index_=0;query_result_index_<query_result.length;++query_result_index_) {
                             var query_result_index=query_result[query_result_index_];
-                            
+
                             console.log('WARNING ! found Attribute XSS');
                         }
+                        return true;
                     }
                 }
             }
-            
             return false;
         }
         
@@ -376,14 +379,13 @@
                             
                             
             <!-- test case -->
-                            
-            <img src="123" onerror="alert('xss')"/>
-            
-            <script>alert('xss');</script>
-                            
         </div>
         <div id="xss_test_2"><!-- 反射XSS ,直接插入 <img> -->
-           
+            <?php
+                if (isset($_GET['xss_test_2']))
+                    echo '<img src="'.$_GET['xss_test_2'].'"/>';
+            ?>
+            
         </div>
         <div id="xss_test_3"><!-- 反射XSS ,直接插入 <iframe> -->
            
@@ -408,31 +410,3 @@
     </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
