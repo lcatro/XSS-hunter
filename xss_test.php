@@ -182,23 +182,29 @@
         }
         
         function find_first_eval_flag(parameter_value_string) {
-            flag_index=parameter_value_string.indexOf('\'');
-            if (-1!=flag_index)
-                return flag_index;
+            var flag_single_quotes_index=parameter_value_string.indexOf('\'');
+            var flag_quotes_index=parameter_value_string.indexOf('"');
+            var flag_less_than_signs_index=parameter_value_string.indexOf('<');
+            var flag_right_than_signs_index=parameter_value_string.indexOf('>');
             
-            flag_index=parameter_value_string.indexOf('"');
-            if (-1!=flag_index)
-                return flag_index;
+            var first_char=-1;
             
-            var flag_index=parameter_value_string.indexOf('<');
-            if (-1!=flag_index)
-                return flag_index;
+            if (-1!=flag_single_quotes_index)
+                first_char=flag_single_quotes_index;
             
-            flag_index=parameter_value_string.indexOf('>');
-            if (-1!=flag_index)
-                return flag_index;
+            if (-1!=flag_quotes_index &&
+                first_char>flag_quotes_index)
+                first_char=flag_quotes_index;
             
-            return -1;
+            if (-1!=flag_less_than_signs_index &&
+                first_char>flag_less_than_signs_index)
+                first_char=flag_less_than_signs_index;
+            
+            if (-1!=flag_right_than_signs_index &&
+                first_char>flag_right_than_signs_index)
+                first_char=flag_right_than_signs_index;
+            
+            return first_char;
         }
             
         function check_insert_xss_code(parameter_value_string) {
