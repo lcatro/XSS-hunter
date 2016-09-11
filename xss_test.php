@@ -172,7 +172,6 @@
                         analayis_index['reflected_data']=danger_parameter_index;
                     } else if ('\''==eval_flag || '"'==eval_flag) {
                         analayis_index['reflected_type']=REFLECTED_XSS_INJECT_ELEMENT_OR_JAVASCRIPT;
-//                        analayis_index['reflected_data']=split_string_space(danger_parameter_index);  使用分割属性的方法来匹配属性插入的元素
                         analayis_index['reflected_data']=danger_parameter_index;
                     }
                 }
@@ -215,7 +214,6 @@
                 var body_code=document.body.innerHTML;
                 var index=body_code.indexOf(insert_element_string);
 
-                console.log(insert_dom_string);
                 if (-1!=index) {  //  针对URL 参数里的可疑HTML 代码在body 内部的HTML 代码中搜索..
                     console.log('WARNING ! found DOM XSS ..');
                     return true;
@@ -235,18 +233,28 @@
                 
                 if ('"'==insert_element_string ||
                     '\''==insert_element_string) {
+                    /*
+                        选择含有' 和" 符号的HTML 元素,一般在XSS 初期测试的时候会通过注入' 和" 号看看能否开闭HTML 属性
+                        Example :
+
+                        <img src="%input%" />
+                                |  
+                                v
+                        正常情况下:<img src="123" />
+                        转码情况下:<img src="123&quet" />
+                        XSS 成功情况下:<img src="123" " />
+                    */
                     var attribute_selector=document.body.querySelectorAll('[\\'+attribute_list[0]+']');
                     
                     if (attribute_selector.length) {
                         console.log('WARNING ! found Attribute XSS -- Bypass Attribute String closed (" and \')..');
-//                        console.log(attribute_selector);
                     }
                 } else {
                     var body_code=document.body.innerHTML;
                     var unencode_index=body_code.indexOf(insert_element_string);
                     var encode_index=body_code.indexOf(insert_element_string.replace(/</g,'%3C').replace(/>/g,'%3E'));
                     /*
-                        WARNING! 这种情况还需要注意绕过属性闭合构造DOM XSS 的情况,有可能在插入的时候< > 会被过滤成字符编码..
+                        TIPS: 这种情况还需要注意绕过属性闭合构造DOM XSS 的情况,有可能在插入的时候< > 会被过滤成字符编码..
                         Example:
 
                         " onerror="alert(\'element onerror() xss\');" /><script>alert(\'DOM XSS\');<//script>
@@ -254,66 +262,30 @@
                     
                     if (-1!=unencode_index) {
                         console.log('WARNING ! found Attribute XSS ,unencode insert code ..');
-//                        console.log(index);
                     } else if (-1!=encode_index) {
                         console.log('WARNING ! found Attribute XSS ,encode insert code ..');
                     }
                     
-                    //  WARNING ! 针对Attribute 的闭合XSS 构造也会触发XSS 过滤器,onerror 等事件将不再有代码存在..
-                    var =split_string_space(insert_element_string);
-                    if () {
-                        
-                    }
+                    var attribute_list=split_string_space(insert_element_string);  //  使用分割属性的方法来匹配属性插入的元素
+                    var valid_query_attribute_name_string='';
                     
-                }
-                
-                /*
-                var attribute_list=reflected_parameter['reflected_data'];
-                
-                if (attribute_list.length) {
-                    if (1==attribute_list.length) {  //  XSS 测试初期,使用" 或者' 号绕过元素的属性闭合
-                        var attribute_selector=document.querySelectorAll('[\\'+attribute_list[0]+']');
-                        /*
-                            选择含有' 和" 符号的HTML 元素,一般在XSS 初期测试的时候会通过注入' 和" 号看看能否开闭HTML 属性
-                            Example :
+                    for (var attribute_list_index_=0;attribute_list_index_<attribute_list.length;++attribute_list_index_) {
+                        var attribute_list_index=split_url_parameter_value(attribute_list[attribute_list_index_]);
+                        
+                        if (undefined!=attribute_list_index['key'] && 
+                           ('"'!=attribute_list_index['key'] || '\''!=attribute_list_index['key']))
+                            valid_query_attribute_name_string+='['+attribute_list_index['key']+']';
+                    }
+                    var query_result=document.querySelectorAll(valid_query_attribute_name_string);
+                    
+                    if (query_result.length) {
+                        for (var query_result_index_=0;query_result_index_<query_result.length;++query_result_index_) {
+                            var query_result_index=query_result[query_result_index_];
                             
-                            <img src="%input%" />
-                                    |  
-                                    v
-                            正常情况下:<img src="123" />
-                            转码情况下:<img src="123&quet" />
-                            XSS 成功情况下:<img src="123" " />
-                        
-                        
-                        if (attribute_selector.length) {
-                            console.log(attribute_selector);
-                        }
-                    } else {  //  URL 的参数中出现了多个HTML 元素属性..
-                        var attribute_query_selector_string='';
-                        
-                        for (var attribute_list_index in attribute_list) {
-                            var attribute_key_value=split_url_parameter_value(attribute_list[attribute_list_index]);
-                            
-                            if ('\''==attribute_key_value['key'] || 
-                                '"'==attribute_key_value['key'] ||
-                                undefined==attribute_key_value['key'])
-                                continue;
-                            
-                            attribute_query_selector_string+='[';
-                            attribute_query_selector_string+=attribute_key_value['key'];
-                            attribute_query_selector_string+=']';
-                        }
-                        
-                        if (''!=attribute_query_selector_string) {
-                            //   WARNING ! 还没有好的办法找到event ..
-
-                            var attribute_selector=document.querySelectorAll(attribute_query_selector_string);
-                            console.log(attribute_query_selector_string);
-                            console.log(attribute_selector);
+                            console.log('WARNING ! found Attribute XSS');
                         }
                     }
                 }
-                */
             }
             
             return false;
