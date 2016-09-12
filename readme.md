@@ -17,5 +17,5 @@
     http://127.0.0.1/xss_test.php?xss_test_2=" /><script>alert('xss');</script>  --  绕过元素之外构造DOM XSS 测试
     http://127.0.0.1/xss_test.php?xss_test_2=123  --  元素XSS 误报测试
 
-在测试中全部通过,`XSS-hunter` 的检测效果:
+在测试中全部通过,`XSS-hunter` 的检测效果:<br/>
 ![example](https://raw.githubusercontent.com/lcatro/XSS-hunter/master/example.png)
