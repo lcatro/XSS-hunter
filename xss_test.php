@@ -44,15 +44,17 @@
                         for (var index=0;index<mutation.addedNodes.length;++index) {
                             var new_element=mutation.addedNodes[index];
                             
-                            if (dynamic_check_eval_event(new_element) || dynamic_check_eval_element(new_element))
-                                report(new_element);
+                            if (dynamic_check_eval_event(new_element) || dynamic_check_eval_element(new_element)) {
+                                console.log('WARNING ! Dynamic Create XSS ,inject DOM ..');
+                            }
                         }
                     } else if ('attributes'==mutation.type) {
                         var new_attribute_value=eval('mutation.target.'+mutation.attributeName);
                         var change_attribute_element=mutation.target;
                         
-                        if (dynamic_check_eval_event(change_attribute_element))
-                            report(change_attribute_element);
+                        if (dynamic_check_eval_event(change_attribute_element)) {
+                            console.log('WARNING ! Dynamic Create XSS ,inject to attribute event ..');
+                        }
                     }
                 }); 
             });
