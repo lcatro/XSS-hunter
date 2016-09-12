@@ -2,7 +2,7 @@
 <html>
 
     <script>
-        //  handler DOM 上变化来检测XSS
+        //  动态检测DOM 上变化来检测XSS
         
         function report(xss_detail_element) {
             console.log('WARNING! EVAL ELEMENT .. '+xss_detail_element.tagName+'  '+xss_detail_element.src);
@@ -51,16 +51,11 @@
                     }
                 }); 
             });
-
             observer.observe(document.body,{
                 'childList': true,
                 'subtree': true,
                 'attributes' : true
             });
-            
-            //  
-            
-            //  build element on body ..
             test_case();
         }
         
@@ -120,6 +115,7 @@
             
             if (-1!=is_exist_url_parameter) {
                 current_url=current_url.substr(is_exist_url_parameter+1);
+                
                 var every_parameter=current_url.indexOf('&');
                 
                 while (-1!=every_parameter) {
@@ -151,7 +147,6 @@
                 input_string=input_string.substr(next_space_index+1);
                 next_space_index=input_string.indexOf(' ');
             }
-            
             result.push(input_string);
             return result;
         }
@@ -189,18 +184,17 @@
             
             var first_char=-1;
             
-            if (-1!=flag_single_quotes_index)
-                first_char=flag_single_quotes_index;
+            first_char=flag_single_quotes_index;
             
-            if (-1!=flag_quotes_index &&
+            if (-1==first_char ||
                 first_char>flag_quotes_index)
                 first_char=flag_quotes_index;
             
-            if (-1!=flag_less_than_signs_index &&
+            if (-1==first_char ||
                 first_char>flag_less_than_signs_index)
                 first_char=flag_less_than_signs_index;
             
-            if (-1!=flag_right_than_signs_index &&
+            if (-1==first_char ||
                 first_char>flag_right_than_signs_index)
                 first_char=flag_right_than_signs_index;
             
@@ -210,31 +204,35 @@
         function check_insert_xss_code(parameter_value_string) {
             if (-1!=find_first_eval_flag(parameter_value_string))
                 return true;
+            
             return false;
         }
         
         function check_insert_xss_into_element(reflected_parameter) {
             if (REFLECTED_XSS_INJECT_DOM==reflected_parameter['reflected_type']) {
                 var insert_dom_string=reflected_parameter['reflected_data'];
+                /*
                 var insert_element_name=insert_dom_string.substr(insert_dom_string.indexOf('<')+1,insert_dom_string.indexOf('>')-1).trim();
 
                 var body_code=document.body.innerHTML;
                 var index=body_code.indexOf(insert_element_string);
-
-                if (-1!=index) {  //  针对URL 参数里的可疑HTML 代码在body 内部的HTML 代码中搜索..
-                    console.log('WARNING ! found DOM XSS ..');
+                */
+                var reg_matching=new RegExp('<\\w+>|<\\w+ ','g');
+                var reg_matching_result=insert_dom_string.match(reg_matching);
+                
+                for (var pick_element_tag_name=0;pick_element_tag_name<reg_matching_result.length;++pick_element_tag_name)
+                    reg_matching_result[pick_element_tag_name]=reg_matching_result[pick_element_tag_name].substr(1,reg_matching_result[pick_element_tag_name].length-2);
+                
+                var build_query_selector_string='';
+                
+                for (var pick_element_tag_name=0;pick_element_tag_name<reg_matching_result.length;++pick_element_tag_name)
+                    build_query_selector_string+=reg_matching_result[pick_element_tag_name]+' ';
+                
+                var search_insert_element_list=document.body.querySelectorAll(build_query_selector_string);
+                
+                if (search_insert_element_list.length) {
+                    console.log('WARNING ! found reflected DOM XSS -- Bypass Attribute String closed (" and \')..');
                     return true;
-                }
-                if ('script'==insert_element_name) {  //  最后是针对已经被XSS 过滤器净化之后的<script> 标签..
-                    var script_selector=document.body.querySelectorAll('script');
-                    
-                    for (var script_selector_index=0;script_selector_index<script_selector.length;++script_selector_index) {
-                        if (''==script_selector[script_selector_index].innerHTML.trim()) {
-                            //  <script> 内部空代码意味着XSS 过滤器已经成功过滤掉<script> 中的代码..
-                            console.log('WARNING ! found Script inject (XSS-Audit had filter )');
-                            return true;
-                        }
-                    }
                 }
             } else if (REFLECTED_XSS_INJECT_ELEMENT_OR_JAVASCRIPT==reflected_parameter['reflected_type']) {
                 var insert_element_string=reflected_parameter['reflected_data'];
@@ -255,7 +253,7 @@
                     var attribute_selector=document.body.querySelectorAll('[\\'+insert_element_string+']');
                     
                     if (attribute_selector.length) {
-                        console.log('WARNING ! found Attribute XSS -- Bypass Attribute String closed (" and \')..');
+                        console.log('WARNING ! found reflected Attribute XSS -- Bypass Attribute String closed (" and \')..');
                         return true;
                     }
                 } else {
@@ -270,10 +268,10 @@
                     */
                     
                     if (-1!=unencode_index) {
-                        console.log('WARNING ! found Attribute XSS ,unencode insert code ..');
+                        console.log('WARNING ! found reflected Attribute XSS ,unencode insert code ..');
                         return true;
                     } else if (-1!=encode_index) {
-                        console.log('WARNING ! found Attribute XSS ,encode insert code ..');
+                        console.log('WARNING ! found reflected Attribute XSS ,encode insert code ..');
                         return true;
                     }
                     var attribute_list=split_string_space(insert_element_string);  //  使用分割属性的方法来匹配属性插入的元素
@@ -292,7 +290,7 @@
                         for (var query_result_index_=0;query_result_index_<query_result.length;++query_result_index_) {
                             var query_result_index=query_result[query_result_index_];
 
-                            console.log('WARNING ! found Attribute XSS');
+                            console.log('WARNING ! found reflected Attribute XSS');
                         }
                         return true;
                     }
@@ -348,6 +346,7 @@
             if (url_parameter_list.length) {
                 var decode_parameter_list=[];
                 var danger_parameter_value_list=[];
+                
                 for (var parameter_index_ in url_parameter_list) {
                     var parameter_index=url_parameter_list[parameter_index_];
                     
@@ -383,10 +382,10 @@
                 测试Payload:
                 
                 http://127.0.0.1/xss_test.php?xss_test_1=<script>alert('xss');</script>  --  基本测试
-                http://127.0.0.1/xss_test.php?xss_test_1=<img src="" onerror="alert('xss')" />  --  DOM <img> 元素事件XSS 执行测试 (WARNING !!! 未通过)
-                http://127.0.0.1/xss_test.php?xss_test_1=<iframe src="http://www.baidu.com" />  --  <iframe> 元素挂马测试 (WARNING !!! 未通过)
-                http://127.0.0.1/xss_test.php?xss_test_1=<svg>/<script>alert('xss');</script>  --  组合HTML 元素绕过测试 (WARNING !!! 未通过)
-                http://127.0.0.1/xss_test.php?xss_test_1=<div><a><img src="" onerror="alert('xss')" /> (WARNING !!! 未通过)
+                http://127.0.0.1/xss_test.php?xss_test_1=<img src="" onerror="alert('xss')" />  --  DOM <img> 元素事件XSS 执行测试
+                http://127.0.0.1/xss_test.php?xss_test_1=<iframe src="http://www.baidu.com" />  --  <iframe> 元素挂马测试
+                http://127.0.0.1/xss_test.php?xss_test_1=<svg>/<script>alert('xss');</script>  --  组合HTML 元素绕过测试
+                http://127.0.0.1/xss_test.php?xss_test_1=<div><a><img src="" onerror="alert('xss')" />  --  混合HTML 元素和img 事件绕过测试
                 
             -->
             <?php
