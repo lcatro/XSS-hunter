@@ -2,11 +2,16 @@
 <html>
 
     <script>
-        //  动态检测DOM 上变化来检测XSS
+        //  XSS 漏水报告
         
         function report(xss_detail_element) {
             console.log('WARNING! EVAL ELEMENT .. '+xss_detail_element.tagName+'  '+xss_detail_element.src);
         }
+
+    </script>
+    
+    <script>
+        //  动态检测DOM 上变化来检测XSS
         
         function dynamic_check_eval_event(element) {
             var black_element_event=['onerror','onload'];
@@ -122,9 +127,6 @@
                     var parameter_key_value=current_url.substr(0,every_parameter);
                     var result_key_value_block=split_url_parameter_value(parameter_key_value);
                     
-                    if (undefined==result_key_value_block.key)
-                        return result;
-                    
                     result.push(result_key_value_block);
                     current_url=current_url.substr(every_parameter+1);
                     every_parameter=current_url.indexOf('&');
@@ -211,12 +213,6 @@
         function check_insert_xss_into_element(reflected_parameter) {
             if (REFLECTED_XSS_INJECT_DOM==reflected_parameter['reflected_type']) {
                 var insert_dom_string=reflected_parameter['reflected_data'];
-                /*
-                var insert_element_name=insert_dom_string.substr(insert_dom_string.indexOf('<')+1,insert_dom_string.indexOf('>')-1).trim();
-
-                var body_code=document.body.innerHTML;
-                var index=body_code.indexOf(insert_element_string);
-                */
                 var reg_matching=new RegExp('<\\w+>|<\\w+ ','g');
                 var reg_matching_result=insert_dom_string.match(reg_matching);
                 
@@ -231,7 +227,7 @@
                 var search_insert_element_list=document.body.querySelectorAll(build_query_selector_string);
                 
                 if (search_insert_element_list.length) {
-                    console.log('WARNING ! found reflected DOM XSS -- Bypass Attribute String closed (" and \')..');
+                    console.log('WARNING ! found reflected DOM XSS ..');
                     return true;
                 }
             } else if (REFLECTED_XSS_INJECT_ELEMENT_OR_JAVASCRIPT==reflected_parameter['reflected_type']) {
@@ -289,9 +285,8 @@
                     if (query_result.length) {
                         for (var query_result_index_=0;query_result_index_<query_result.length;++query_result_index_) {
                             var query_result_index=query_result[query_result_index_];
-
-                            console.log('WARNING ! found reflected Attribute XSS');
                         }
+                        console.log('WARNING ! found reflected Attribute XSS');
                         return true;
                     }
                 }
@@ -303,7 +298,6 @@
             var url_parameter_list=split_url_parameter_list();
             
             /*
-            
                 反射XSS Payload 集合
                 
                 注入代码到HTML DOM :
@@ -340,7 +334,6 @@
                              arg=<script>alert('xss');<//script>
                 
                 最后利用特征在document.querySelector 中发掘..
-                
             */
             
             if (url_parameter_list.length) {
@@ -378,7 +371,8 @@
     <body onload="check_reflected_xss()">
         
         <div id="xss_test_1">
-            <!-- 反射XSS ,直接插入 <script>,<img>,<iframe>,混合插入 <script>,<img>,<iframe> 
+            <!--
+                反射XSS ,直接插入 <script>,<img>,<iframe>,混合插入 <script>,<img>,<iframe> 
                 测试Payload:
                 
                 http://127.0.0.1/xss_test.php?xss_test_1=<script>alert('xss');</script>  --  基本测试
@@ -386,7 +380,6 @@
                 http://127.0.0.1/xss_test.php?xss_test_1=<iframe src="http://www.baidu.com" />  --  <iframe> 元素挂马测试
                 http://127.0.0.1/xss_test.php?xss_test_1=<svg>/<script>alert('xss');</script>  --  组合HTML 元素绕过测试
                 http://127.0.0.1/xss_test.php?xss_test_1=<div><a><img src="" onerror="alert('xss')" />  --  混合HTML 元素和img 事件绕过测试
-                
             -->
             <?php
                 if (isset($_GET['xss_test_1']))
@@ -394,7 +387,8 @@
             ?>
         </div>
         <div id="xss_test_2">
-            <!-- 反射XSS 混合元素插入,混合属性和事件属性插入 <img> ,<img> 中混合属性和事件属性插入 <script>
+            <!--
+                反射XSS 混合元素插入,混合属性和事件属性插入 <img> ,<img> 中混合属性和事件属性插入 <script>
                 测试Payload:
                 
                 http://127.0.0.1/xss_test.php?xss_test_2="  --  初期XSS 绕过元素属性闭合测试
@@ -403,7 +397,6 @@
                 http://127.0.0.1/xss_test.php?xss_test_2=" alt="change tips";  --  元素XSS 修改非事件属性测试
                 http://127.0.0.1/xss_test.php?xss_test_2=" /><script>alert('xss');</script>  --  绕过元素之外构造DOM XSS 测试
                 http://127.0.0.1/xss_test.php?xss_test_2=123  --  元素XSS 误报测试
-                
             -->
             <?php
                 if (isset($_GET['xss_test_2']))
