@@ -215,19 +215,24 @@
         function check_insert_xss_into_element(reflected_parameter) {
             if (REFLECTED_XSS_INJECT_DOM==reflected_parameter['reflected_type']) {
                 var insert_dom_string=reflected_parameter['reflected_data'];
-                var reg_matching=new RegExp('<\\w+>|<\\w+ ','g');
+                var reg_matching=new RegExp('<\\w+>|<\\w+ |<\\w+\/','g');  
+                /*
+                    TIPS :
+                    这里针对了<script>,<iframe>,<iframe/src=""/>
+                    这样的XSS vector 做了过滤..
+                */
                 var reg_matching_result=insert_dom_string.match(reg_matching);
                 
                 for (var pick_element_tag_name=0;pick_element_tag_name<reg_matching_result.length;++pick_element_tag_name)
                     reg_matching_result[pick_element_tag_name]=reg_matching_result[pick_element_tag_name].substr(1,reg_matching_result[pick_element_tag_name].length-2);
-                
+
                 var build_query_selector_string='';
-                
+
                 for (var pick_element_tag_name=0;pick_element_tag_name<reg_matching_result.length;++pick_element_tag_name)
                     build_query_selector_string+=reg_matching_result[pick_element_tag_name]+' ';
-                
+
                 var search_insert_element_list=document.body.querySelectorAll(build_query_selector_string);
-                
+
                 if (search_insert_element_list.length) {
                     console.log('WARNING ! found reflected DOM XSS ..');
                     return true;
